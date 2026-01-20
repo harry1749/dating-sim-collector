@@ -43,3 +43,75 @@ def register_user(nickname, gender):
     except Exception as e:
         st.error(f"DB 저장 실패: {e}")
         return None
+
+
+def create_game_session(user_id, final_choice=None, my_persona=None, ideal_preference=None):
+    """
+    게임 세션을 생성하고 session_id를 반환합니다.
+    게임 시작 시 호출하여 session_id를 받고, 게임 종료 시 update로 결과를 채움.
+    """
+    try:
+        session_data = {
+            "user_id": user_id,
+            "final_choice": final_choice,
+            "my_persona": my_persona,
+            "ideal_preference": ideal_preference
+        }
+        
+        response = supabase.table("game_sessions").insert(session_data).execute()
+        
+        if response.data:
+            return response.data[0]['session_id']
+        return None
+
+    except Exception as e:
+        st.error(f"세션 생성 실패: {e}")
+        return None
+
+
+def update_game_session(session_id, final_choice, my_persona, ideal_preference):
+    """
+    게임 종료 시 세션 결과를 업데이트합니다.
+    """
+    try:
+        update_data = {
+            "final_choice": final_choice,
+            "my_persona": my_persona,
+            "ideal_preference": ideal_preference
+        }
+        
+        response = supabase.table("game_sessions").update(update_data).eq("session_id", session_id).execute()
+        return response.data is not None
+
+    except Exception as e:
+        st.error(f"세션 업데이트 실패: {e}")
+        return False
+
+
+def save_chat_log(session_id, partner_type, chat_history, turn_count):
+    """
+    각 라운드(파트너)별 채팅 로그를 저장합니다.
+    partner_type: 'EMOTIONAL', 'LOGICAL', 'TOUGH'
+    chat_history: OpenAI API 포맷의 메시지 리스트 (system 제외 권장)
+    turn_count: 대화 턴 수
+    """
+    try:
+        # system 메시지 제외한 대화만 저장
+        filtered_history = [msg for msg in chat_history if msg["role"] != "system"]
+        
+        log_data = {
+            "session_id": session_id,
+            "partner_type": partner_type,
+            "chat_history": filtered_history,
+            "turn_count": turn_count
+        }
+        
+        response = supabase.table("chat_logs").insert(log_data).execute()
+        
+        if response.data:
+            return response.data[0]['log_id']
+        return None
+
+    except Exception as e:
+        st.error(f"채팅 로그 저장 실패: {e}")
+        return None

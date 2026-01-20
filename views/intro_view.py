@@ -1,6 +1,6 @@
 # views/intro_view.py
 import streamlit as st
-from services.db_service import register_user
+from services.db_service import register_user, create_game_session
 import time
 
 def show_intro():
@@ -36,8 +36,12 @@ def show_intro():
                 user_id = register_user(nickname, gender)
                 
                 if user_id:
+                    # 게임 세션 생성
+                    session_id = create_game_session(user_id)
+                    
                     # 세션에 정보 저장 (로그인 처리)
                     st.session_state["user_id"] = user_id
+                    st.session_state["session_id"] = session_id
                     st.session_state["nickname"] = nickname
                     st.session_state["gender"] = gender
                     st.session_state["step"] = "game" # 다음 단계로 이동 신호

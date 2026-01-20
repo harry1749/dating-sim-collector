@@ -38,7 +38,7 @@ def show_result():
     st.title("📊 분석 결과")
     st.success("데이터가 성공적으로 분석되었습니다!")
     st.json({
-        "nickname": st.session_state["user_data"]["nickname"],
+        "nickname": st.session_state["nickname"],
         "love_style": "츤데레 전략가",
         "match_score": 98
     })
