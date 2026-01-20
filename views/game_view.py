@@ -40,10 +40,20 @@ def show_game():
             {"role": "assistant", "content": greeting}
         ]
 
+    # 호감도 초기화
+    if "affection_score" not in st.session_state:
+        st.session_state["affection_score"] = 50 # 0 ~ 100
+
     # 2. UI 표시
     # 진행 상황 (Progress Bar)
-    st.info(f"현재 진행 중: **{ROUND_LABELS[current_round]}**")
-    st.progress(current_round / 3)
+    col1, col2 = st.columns([3, 1])
+    with col1:
+        st.info(f"현재 진행 중: **{ROUND_LABELS[current_round]}**")
+        st.progress(current_round / 3)
+    with col2:
+        score = st.session_state["affection_score"]
+        st.metric(label="💖 호감도", value=score)
+        st.progress(score / 100)
 
     # 채팅 기록 표시
     for msg in st.session_state["messages"]:
@@ -61,12 +71,26 @@ def show_game():
         # AI 응답 생성
         with st.chat_message("assistant"):
             message_placeholder = st.empty()
-            full_response = ""
             with st.spinner("상대방이 입력 중입니다..."):
-                ai_response = get_ai_response(st.session_state["messages"])
+                result = get_ai_response(st.session_state["messages"])
                 
+            ai_text = result.get("response", "...")
+            score_delta = result.get("score", 0)
+            
+            # 호감도 업데이트
+            prev_score = st.session_state["affection_score"]
+            new_score = max(0, min(100, prev_score + score_delta))
+            st.session_state["affection_score"] = new_score
+            
+            # 점수 변화 알림
+            if score_delta > 0:
+                st.toast(f"호감도가 올랐습니다! (+{score_delta}) 😍")
+            elif score_delta < 0:
+                st.toast(f"호감도가 떨어졌습니다.. ({score_delta}) 😢")
+
             # 타자기 효과
-            for chunk in ai_response.split():
+            full_response = ""
+            for chunk in ai_text.split():
                 full_response += chunk + " "
                 time.sleep(0.05)
                 message_placeholder.markdown(full_response + "▌")
@@ -74,6 +98,14 @@ def show_game():
         
         # AI 메시지 저장
         st.session_state["messages"].append({"role": "assistant", "content": full_response})
+        
+        # 게임 오버 체크
+        if new_score <= 0:
+            st.error(f"💔 {persona_name}님이 실망하여 자리를 떠났습니다...")
+            time.sleep(3)
+            st.session_state["fail_reason"] = "호감도 부족"
+            st.session_state["step"] = "result" # 결과 화면(실패)으로 이동
+            st.rerun()
 
     # 4. 라운드 종료 / 넘기기 (임시 버튼)
     st.divider()
