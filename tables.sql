@@ -166,3 +166,4 @@ COMMENT ON COLUMN affinity_logs.score_change IS '직전 점수 대비 변화량 
 COMMENT ON COLUMN affinity_logs.current_score IS '변화가 반영된 현재 총 호감도 (0~100)';
 COMMENT ON COLUMN affinity_logs.reason IS 'AI가 판단한 호감도 변화의 구체적인 이유';
 COMMENT ON COLUMN affinity_logs.trigger_message IS '호감도 변화를 유발한 사용자의 메시지 내용';
+COMMENT ON COLUMN affinity_logs.created_at IS '로그 생성 시간';

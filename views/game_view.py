@@ -50,16 +50,62 @@ def show_game():
     if "affection_scores" not in st.session_state:
         st.session_state["affection_scores"] = {1: 50, 2: 50, 3: 50}
 
-    # 2. UI 표시
+    # 2. UI 표시 - Sticky Floating 헤더
     # 현재 상대방 정보 + 남은 대화 횟수
     turn_count = len([m for m in st.session_state["messages"] if m["role"] == "user"])
     remaining = MAX_TURNS - turn_count
     
-    col1, col2 = st.columns([4, 1])
-    with col1:
-        st.subheader(f"💬 {persona_name}님과 대화 중")
-    with col2:
-        st.metric(label="남은 대화", value=f"{remaining}회")
+    # Fixed 헤더 스타일 적용 (Streamlit에서 더 안정적)
+    st.markdown("""
+    <style>
+    /* 메인 컨테이너에 상단 패딩 추가 (헤더 공간 확보) */
+    .main .block-container {
+        padding-top: 100px !important;
+    }
+    
+    .sticky-header {
+        position: fixed;
+        top: 60px;  /* Streamlit 상단 바 높이만큼 띄움 */
+        left: 50%;
+        transform: translateX(-50%);  /* 중앙 정렬 */
+        z-index: 999999;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 3px 12px;
+        width: 100%;
+        max-width: 730px;  /* Streamlit 채팅창 기본 너비와 동일 */
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: white;
+    }
+    
+    .sticky-header h3 {
+        margin: 0;
+        font-size: 1rem;
+        color: white !important;
+        font-weight: 600;
+    }
+    
+    .sticky-header .remaining {
+        background: rgba(255, 255, 255, 0.2);
+        padding: 6px 12px;
+        border-radius: 16px;
+        font-weight: bold;
+        font-size: 0.9rem;
+        backdrop-filter: blur(10px);
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    # Fixed 헤더 HTML
+    st.markdown(f"""
+    <div class="sticky-header">
+        <h3>💬 {persona_name}님과 대화 중</h3>
+        <div class="remaining">남은 대화: {remaining}회</div>
+    </div>
+    """, unsafe_allow_html=True)
     
     # 대화 시간 제한 안내
     if remaining <= 3 and remaining > 0:
