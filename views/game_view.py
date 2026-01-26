@@ -49,6 +49,10 @@ def show_game():
     # 호감도 초기화 (라운드별 개별 점수)
     if "affection_scores" not in st.session_state:
         st.session_state["affection_scores"] = {1: 50, 2: 50, 3: 50}
+    
+    # pending_message 초기화 (첫 입력이 작동하도록)
+    if "pending_message" not in st.session_state:
+        st.session_state["pending_message"] = None
 
     # 2. UI 표시 - Sticky Floating 헤더
     # 현재 상대방 정보 + 남은 대화 횟수
@@ -308,19 +312,9 @@ def show_game():
     # 5. 사용자 입력 처리
     prompt = st.chat_input("메시지를 입력하세요...")
     
-    if prompt:
-        # 마지막 메시지가 user인지 확인 (연속 user 입력 방지)
-        messages = st.session_state.get("messages", [])
-        last_message_is_user = False
-        for msg in reversed(messages):
-            if msg["role"] != "system":
-                last_message_is_user = (msg["role"] == "user")
-                break
-        
-        # 마지막이 assistant 메시지일 때만 새 입력 허용
-        if not last_message_is_user and not st.session_state.get("pending_message"):
-            st.session_state["messages"].append({"role": "user", "content": prompt})
-            st.session_state["pending_message"] = prompt
-            # st.rerun() 제거 - st.chat_input이 자동으로 재실행함
-        # 그 외의 경우는 조용히 무시 (화면에도 안 나옴)
+    if prompt and not st.session_state.get("pending_message"):
+        # pending_message가 없을 때만 새 입력 허용 (AI 응답 대기 중이 아닐 때)
+        st.session_state["messages"].append({"role": "user", "content": prompt})
+        st.session_state["pending_message"] = prompt
+        st.rerun()  # 즉시 재실행하여 AI 응답 처리 시작
 
